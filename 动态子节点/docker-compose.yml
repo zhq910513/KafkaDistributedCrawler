@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    environment:
+      KAFKA_BROKER_ID: ${BROKER_ID}
+      KAFKA_ZOOKEEPER_CONNECT: A_server_IP:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${HOST_IP}:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_NUM_PARTITIONS: 50
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_COMPRESSION_TYPE: snappy
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+      KAFKA_HEAP_OPTS: "-Xmx4G -Xms4G"
+      KAFKA_JVM_PERFORMANCE_OPTS: "-XX:MetaspaceSize=96m -XX:MaxMetaspaceSize=96m -XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35 -XX:G1ReservePercent=25 -XX:MinMetaspaceFreeRatio=50 -XX:MaxMetaspaceFreeRatio=80"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    restart: always
+
+volumes:
+  kafka_data:
