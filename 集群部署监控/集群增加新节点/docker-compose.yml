@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  consul:
+    image: consul:latest
+    command: agent -retry-join=consul-1 -retry-join=consul-2 -config-dir=/consul/config
+    ports:
+      - "8501:8500"  # Consul UI 和 API (与第一台服务器上的 Consul 使用不同端口)
+      - "8601:8600/udp"  # DNS (与第一台服务器上的 Consul 使用不同端口)
+    volumes:
+      - ./consul.d:/consul/config  # 将主机目录挂载到容器中
+    networks:
+      - my-network
+    restart: always
+
+  zookeeper:
+    image: zookeeper:3.7
+    environment:
+      ZOO_MY_ID: 2  # 为每个节点分配唯一的 ID
+      ZOO_SERVERS: server.1=zookeeper-1:2888:3888,server.2=zookeeper-2:2888:3888
+    ports:
+      - "2182:2181"  # 备用端口，避免与现有节点冲突
+      - "2882:2888"  # 备用端口，避免与现有节点冲突
+      - "3882:3888"  # 备用端口，避免与现有节点冲突
+    networks:
+      - my-network
+    depends_on:
+      - consul
+    labels:
+      - "com.consul.service-name=zookeeper"
+    restart: always
+    volumes:
+      - zookeeper-data:/data
+      - zookeeper-log:/datalog
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    environment:
+      KAFKA_BROKER_ID: 2  # 为每个节点分配唯一的 ID
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2182
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9093:9093"  # 备用端口，避免与现有节点冲突
+    networks:
+      - my-network
+    depends_on:
+      - zookeeper
+      - consul
+    labels:
+      - "com.consul.service-name=kafka"
+    restart: always
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+  redis-master:
+    image: redis:6.2
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6381:6379"  # 备用端口，避免与现有节点冲突
+    networks:
+      - my-network
+    depends_on:
+      - consul
+    labels:
+      - "com.consul.service-name=redis-master"
+    restart: always
+    volumes:
+      - redis-master-data:/data
+
+  redis-slave:
+    image: redis:6.2
+    command: ["redis-server", "--slaveof", "redis-master", "6379"]
+    depends_on:
+      - redis-master
+      - consul
+    ports:
+      - "6382:6379"  # 备用端口，避免与现有节点冲突
+    networks:
+      - my-network
+    labels:
+      - "com.consul.service-name=redis-slave"
+    restart: always
+    volumes:
+      - redis-slave-data:/data
+
+  redis-sentinel:
+    image: redis:6.2
+    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel.conf"]
+    volumes:
+      - ./sentinel.conf:/usr/local/etc/redis/sentinel.conf
+    depends_on:
+      - redis-master
+      - redis-slave
+      - consul
+    ports:
+      - "26380:26379"  # Sentinel 客户端连接端口
+    networks:
+      - my-network
+    labels:
+      - "com.consul.service-name=redis-sentinel"
+    restart: always
+
+networks:
+  my-network:
+    external: true  # 使用与第一台服务器相同的网络
+
+volumes:
+  zookeeper-data:
+  zookeeper-log:
+  kafka-data:
+  redis-master-data:
+  redis-slave-data:

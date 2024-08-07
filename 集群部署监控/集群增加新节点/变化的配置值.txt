@@ -1,0 +1,48 @@
+Consul 服务：
+    command:
+        agent -retry-join=consul-1 -retry-join=consul-2 -config-dir=/consul/config：
+            consul-1 和 consul-2 是第一台和第二台服务器上的 Consul 服务名称。需要根据实际情况调整
+    ports:
+        8501:8500 和 8601:8600/udp：
+            端口映射需要与第一台服务器上的 Consul 使用不同的端口，以避免冲突
+
+Zookeeper：
+    ZOO_MY_ID:
+        2：唯一标识 Zookeeper 节点的 ID。确保与第一台服务器的 Zookeeper 节点不同
+    ZOO_SERVERS:
+        server.1=zookeeper-1:2888:3888,server.2=zookeeper-2:2888:3888：配置所有 Zookeeper 节点。根据实际 Zookeeper 节点的设置进行调整
+    ports:
+        2182:2181, 2882:2888, 3882:3888：端口映射需要与第一台服务器上的 Zookeeper 使用不同的端口，以避免冲突
+
+Kafka：
+    KAFKA_BROKER_ID:
+        2：唯一标识 Kafka 节点的 ID。确保与第一台服务器的 Kafka 节点不同
+    KAFKA_ZOOKEEPER_CONNECT:
+        zookeeper-1:2181,zookeeper-2:2182：配置 Zookeeper 节点的连接
+    KAFKA_ADVERTISED_LISTENERS:
+        PLAINTEXT://kafka-2:9093：Kafka 节点对外广告的监听器地址，需要确保与第一台服务器上的 Kafka 节点不同
+    ports:
+        9093:9093：端口映射需要与第一台服务器上的 Kafka 使用不同的端口，以避免冲突
+
+Redis：
+    redis-master:
+        ports:
+            6381:6379：端口映射需要与第一台服务器上的 Redis 使用不同的端口，以避免冲突
+    redis-slave:
+        ports:
+            6382:6379：端口映射需要与第一台服务器上的 Redis 使用不同的端口，以避免冲突
+    redis-sentinel:
+        ports:
+            26380:26379：端口映射需要与第一台服务器上的 Redis Sentinel 使用不同的端口，以避免冲突
+
+网络：
+    my-network:
+        设置为 external: true 以确保与第一台服务器相同的 Docker 网络
+
+统一和协调
+    服务名称：
+        确保 Consul、Zookeeper、Kafka 和 Redis 的服务名称在整个集群中是唯一的，并且能够通过网络发现
+    端口配置：
+        调整端口映射以避免与第一台服务器上的端口冲突
+    Consul 配置：
+        Consul 的 retry-join 参数需要指向第一台服务器的 Consul 服务，以便新节点可以自动加入集群
