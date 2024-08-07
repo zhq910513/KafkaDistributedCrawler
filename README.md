@@ -1,2 +1,2 @@
 # KafkaDistributedCrawler
-基于Zookeeper集群、Kafka集群的Scrapy分布式爬虫系统
+基于Zookeeper集群、Kafka集群、Redis集群的Scrapy分布式爬虫系统
