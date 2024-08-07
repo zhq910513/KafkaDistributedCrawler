@@ -1,0 +1,16 @@
+{
+  "service": {
+    "name": "redis-master",
+    "tags": ["redis"],
+    "port": 6379,
+    "checks": [
+      {
+        "id": "redis-master-tcp",
+        "name": "Redis Master TCP Check",
+        "tcp": "localhost:6379",
+        "interval": "10s",
+        "timeout": "1s"
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "service": {
+    "name": "redis-slave",
+    "tags": ["redis"],
+    "port": 6380,
+    "checks": [
+      {
+        "id": "redis-slave-tcp",
+        "name": "Redis Slave TCP Check",
+        "tcp": "localhost:6380",
+        "interval": "10s",
+        "timeout": "1s"
+      }
+    ]
+  }
+}

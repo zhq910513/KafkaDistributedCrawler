@@ -1,0 +1,16 @@
+{
+  "service": {
+    "name": "redis-sentinel",
+    "tags": ["redis", "sentinel"],
+    "port": 26379,
+    "checks": [
+      {
+        "id": "redis-sentinel-tcp",
+        "name": "Redis Sentinel TCP Check",
+        "tcp": "localhost:26379",
+        "interval": "10s",
+        "timeout": "1s"
+      }
+    ]
+  }
+}
