@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  consul:
+    image: consul:latest
+    command: agent -dev -config-dir=/consul/config
+    ports:
+      - "8500:8500"  # Consul UI 和 API
+      - "8600:8600/udp"  # DNS
+    volumes:
+      - ./consul.d:/consul/config  # 将主机目录挂载到容器中
+    networks:
+      - my-network
+    restart: always
+
   zookeeper:
     image: zookeeper:3.7
     environment:
@@ -12,6 +24,8 @@ services:
       - "3888:3888"
     networks:
       - my-network
+    depends_on:
+      - consul
     labels:
       - "com.consul.service-name=zookeeper"
     restart: always
@@ -33,6 +47,7 @@ services:
       - my-network
     depends_on:
       - zookeeper
+      - consul
     labels:
       - "com.consul.service-name=kafka"
     restart: always
@@ -46,6 +61,8 @@ services:
       - "6379:6379"
     networks:
       - my-network
+    depends_on:
+      - consul
     labels:
       - "com.consul.service-name=redis-master"
     restart: always
@@ -57,6 +74,7 @@ services:
     command: ["redis-server", "--slaveof", "redis-master", "6379"]
     depends_on:
       - redis-master
+      - consul
     ports:
       - "6380:6379"
     networks:
@@ -75,6 +93,7 @@ services:
     depends_on:
       - redis-master
       - redis-slave
+      - consul
     ports:
       - "26379:26379"
     networks:
@@ -91,6 +110,8 @@ services:
       - "9090:9090"
     networks:
       - my-network
+    depends_on:
+      - consul
     restart: always
 
   grafana:
@@ -106,6 +127,9 @@ services:
       - "3000:3000"
     networks:
       - my-network
+    depends_on:
+      - prometheus
+      - consul
     restart: always
 
 networks:
