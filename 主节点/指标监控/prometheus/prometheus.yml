@@ -1,0 +1,92 @@
+global:
+  scrape_interval: 15s # Default scraping interval
+  evaluation_interval: 15s # Default rule evaluation interval
+  scrape_timeout: 10s # Default scraping timeout
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093 # Replace with your alertmanager address
+
+rule_files:
+  - "alert.rules.yml" # Add your alert rules here
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'zookeeper'
+    static_configs:
+      - targets: ['zookeeper:2181']
+    metrics_path: /metrics
+    scheme: http
+
+  - job_name: 'kafka'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        services: ['kafka']
+    relabel_configs:
+      - source_labels: ['__meta_consul_service']
+        regex: '(.*)'
+        target_label: 'job'
+        replacement: '${1}'
+      - source_labels: ['__meta_consul_service']
+        regex: '(.*)'
+        target_label: 'consul_service'
+        replacement: '${1}'
+
+  - job_name: 'redis'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        services: ['redis']
+    relabel_configs:
+      - source_labels: ['__meta_consul_service']
+        regex: '(.*)'
+        target_label: 'job'
+        replacement: '${1}'
+      - source_labels: ['__meta_consul_service']
+        regex: '(.*)'
+        target_label: 'consul_service'
+        replacement: '${1}'
+
+  - job_name: 'consul'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        services: ['consul']
+    relabel_configs:
+      - source_labels: ['__meta_consul_service']
+        regex: '(.*)'
+        target_label: 'job'
+        replacement: '${1}'
+      - source_labels: ['__meta_consul_service']
+        regex: '(.*)'
+        target_label: 'consul_service'
+        replacement: '${1}'
+
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: /metrics
+    scheme: http
+
+  - job_name: 'alert-manager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+    metrics_path: /metrics
+    scheme: http
+
+  - job_name: 'alert-resolver'
+    static_configs:
+      - targets: ['alert-resolver:8000'] # Replace with the actual port if different
+    metrics_path: /metrics
+    scheme: http
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['node-exporter:9100'] # Replace with your node_exporter address
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080'] # Replace with your cAdvisor address
